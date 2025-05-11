@@ -1,8 +1,11 @@
 package com.educonnet.service;
 
+import java.util.ArrayList;
 import java.util.Optional;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 
 import com.educonnet.entity.User;
@@ -13,7 +16,7 @@ public class UserService {
     @Autowired
     private UserRepository userRepository;
 
-    public void signup(User user) {
+    public User signup(User user) {
         if (userRepository.existsByUsername(user.getUsername())) {
             throw new RuntimeException("Username already exists");
         }
@@ -22,7 +25,8 @@ public class UserService {
             throw new RuntimeException("Email already exists");
         }
 
-        userRepository.save(user);
+        User savedUser = userRepository.save(user);
+        return savedUser;
     }
 
     public boolean signin(User user) {
@@ -38,4 +42,19 @@ public class UserService {
 
         return true;
     }
+
+    public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
+        User user = userRepository.findByUsername(username)
+                .orElseThrow(() -> new UsernameNotFoundException("User not found"));
+
+        return new org.springframework.security.core.userdetails.User(
+                user.getUsername(),
+                user.getPassword(),
+                new ArrayList<>());
+    }
+
+    public boolean existsByUsername(String username) {
+        return userRepository.existsByUsername(username);
+    }
+
 }
